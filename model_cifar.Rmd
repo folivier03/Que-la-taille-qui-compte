@@ -1,0 +1,101 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+
+```{r}
+# load packages
+library(tensorflow)
+library(keras)
+library(reticulate)
+install_tensorflow()
+#
+# parameters
+
+batch_size <- 32
+epochs <- 20
+data_augmentation <- TRUE
+
+```
+
+```{r}
+
+#
+
+cifar <- dataset_cifar10()
+x_train <- cifar$train$x/255
+x_test<- cifar$test$x/255
+y_train <-to_categorical(cifar$train$y, num_classes = 10)
+y_test <- to_categorical(cifar$test$y, num_classes = 10)
+
+# initialize sequential model
+
+model1 <- keras_model_sequential()
+model1 %>%
+
+layer_conv_2d(
+  filter = 32, kernel_size = c(3,3), padding = "same",
+  input_shape = c(32, 32, 3)
+) %>%
+  layer_activation("relu") %>%
+  
+  # Second hidden layer
+  layer_conv_2d(filter = 32, kernel_size = c(3,3)) %>%
+  layer_activation("relu") %>%
+  
+  # Use max pooling
+  layer_max_pooling_2d(pool_size = c(2,2)) %>%
+  #layer_dropout(0.25) %>%
+  
+  # 2 additional hidden 2D convolutional layers
+  layer_conv_2d(filter = 32, kernel_size = c(3,3), padding = "same") %>%
+  layer_activation("relu") %>%
+  layer_conv_2d(filter = 32, kernel_size = c(3,3)) %>%
+  layer_activation("relu") %>%
+  
+  # Use max pooling once more
+  layer_max_pooling_2d(pool_size = c(2,2)) %>%
+  #layer_dropout(0.25) %>%
+  
+  # Flatten max filtered output into feature vector 
+  # and feed into dense layer
+  layer_flatten() %>%
+  layer_dense(512) %>%
+  layer_activation("relu") %>%
+  #layer_dropout(0.5) %>%
+  
+  # Outputs from dense layer are projected onto 10 unit output layer
+  layer_dense(10) %>%
+  layer_activation("softmax")
+
+opt <- optimizer_rmsprop(lr = 0.0001, decay = 1e-6)
+#
+summary(model)
+model1 %>% compile(
+  loss = "categorical_crossentropy",
+  optimizer = opt,
+  metrics = "accuracy")
+# Training 
+```
+model1 without data augmentation
+```{r}
+model1 %>% fit(
+    x_train, y_train,
+    batch_size = batch_size,
+    epochs = epochs,
+    validation_data = list(x_test, y_test),
+    shuffle = TRUE)
+```
+model2 with data augmentation
+
+
+```{r}
+
+```
+
+```{r}
+
+```
+
